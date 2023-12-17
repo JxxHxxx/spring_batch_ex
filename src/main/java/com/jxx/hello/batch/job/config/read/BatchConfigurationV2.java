@@ -1,6 +1,7 @@
-package com.jxx.hello.batch.job.config;
+package com.jxx.hello.batch.job.config.read;
 
 import com.jxx.hello.domain.Customer;
+import com.jxx.hello.batch.job.reader.tokenizer.CustomerFileLineTokenizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -12,23 +13,24 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.transform.Range;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 
 /**
- * 고정 너비 파일 처리
+ * 구분자로 구분된 파일
  */
 
 
 @Slf4j
 //@Configuration
 @RequiredArgsConstructor
-public class BatchConfigurationV1 {
+public class BatchConfigurationV2 {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
+
+    private final CustomerFileLineTokenizer lineTokenizer;
 
     @Bean
     public Job job() {
@@ -51,14 +53,26 @@ public class BatchConfigurationV1 {
 
     @Bean
     @StepScope
+    public FlatFileItemReader<Customer> customerItemReaderV2(@Value("#{jobParameters['customerFile']}") Resource inputFile) {
+        return new FlatFileItemReaderBuilder<Customer>()
+                .name("customerItemReader")
+                .resource(inputFile)
+                .lineTokenizer(lineTokenizer)
+                .targetType(Customer.class)
+                .strict(false)
+                .build();
+    }
+
+
+    @Bean
+    @StepScope
     public FlatFileItemReader<Customer> customerItemReader(@Value("#{jobParameters['customerFile']}") Resource inputFile) {
         return new FlatFileItemReaderBuilder<Customer>()
                 .name("customerItemReader")
                 .resource(inputFile)
-                .fixedLength()
-                .columns(new Range[]{new Range(1, 11), new Range(12, 12), new Range(13, 22), new Range(23, 26), new Range(27, 46)
-                        , new Range(47, 62), new Range(63, 64), new Range(65, 69)})
-                .names(new String[]{"firstName", "middleInitial", "lastName", "addressNumber", "street", "city", "State", "zipCode"})
+                .delimited() // DelimitedLineTokenizer
+                .names(new String[]{"firstName", "middleInitial", "lastName", "addressNumber",
+                        "street", "city", "State", "zipCode"}) // Tokenizer 추가 설정
                 .targetType(Customer.class)
                 .strict(false)
                 .build();

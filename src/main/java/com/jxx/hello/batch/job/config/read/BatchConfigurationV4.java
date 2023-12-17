@@ -1,4 +1,4 @@
-package com.jxx.hello.batch.job.config;
+package com.jxx.hello.batch.job.config.read;
 
 import com.jxx.hello.domain.CustomerV4;
 import com.jxx.hello.batch.job.reader.itemreader.CustomerFileReaderV4;

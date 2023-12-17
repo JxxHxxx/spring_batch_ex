@@ -1,4 +1,4 @@
-package com.jxx.hello.batch.job.config;
+package com.jxx.hello.batch.job.config.read;
 
 import com.jxx.hello.domain.Customer;
 import lombok.RequiredArgsConstructor;
@@ -12,34 +12,23 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.mapping.FieldSetMapper;
-import org.springframework.batch.item.file.mapping.PatternMatchingCompositeLineMapper;
-import org.springframework.batch.item.file.transform.LineTokenizer;
+import org.springframework.batch.item.file.transform.Range;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 
-import java.util.HashMap;
-
 /**
- * 레코드 포맷이 N개인 파일 처리
+ * 고정 너비 파일 처리
  */
 
 
 @Slf4j
 //@Configuration
 @RequiredArgsConstructor
-public class BatchConfigurationV3 {
+public class BatchConfigurationV1 {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
-
-    private final FieldSetMapper transactionFieldSetMapper;
-    private final FieldSetMapper customerFieldSetMapper;
-
-    private final LineTokenizer transactionLineTokenizer;
-    private final LineTokenizer customerFileLineTokenizer;
-
 
     @Bean
     public Job job() {
@@ -66,32 +55,17 @@ public class BatchConfigurationV3 {
         return new FlatFileItemReaderBuilder<Customer>()
                 .name("customerItemReader")
                 .resource(inputFile)
-                .lineMapper(lineMapper())
+                .fixedLength()
+                .columns(new Range[]{new Range(1, 11), new Range(12, 12), new Range(13, 22), new Range(23, 26), new Range(27, 46)
+                        , new Range(47, 62), new Range(63, 64), new Range(65, 69)})
+                .names(new String[]{"firstName", "middleInitial", "lastName", "addressNumber", "street", "city", "State", "zipCode"})
+                .targetType(Customer.class)
+                .strict(false)
                 .build();
     }
 
     @Bean
-    public PatternMatchingCompositeLineMapper lineMapper() {
-        HashMap<String, LineTokenizer> lineTokenizers = new HashMap<>(2);
-
-        lineTokenizers.put("CUST*", customerFileLineTokenizer);
-        lineTokenizers.put("TRANS*", transactionLineTokenizer);
-
-        HashMap<String, FieldSetMapper> fieldSetMappers = new HashMap<>(2);
-
-
-        fieldSetMappers.put("CUST*", customerFieldSetMapper);
-        fieldSetMappers.put("TRANS*", transactionFieldSetMapper);
-
-        PatternMatchingCompositeLineMapper lineMappers = new PatternMatchingCompositeLineMapper<>();
-        lineMappers.setTokenizers(lineTokenizers);
-        lineMappers.setFieldSetMappers(fieldSetMappers);
-
-        return lineMappers;
-    }
-
-    @Bean
-    public ItemWriter<Object> itemWriter() {
-        return items -> items.forEach(item -> log.info("item : {}" , item));
+    public ItemWriter<Customer> itemWriter() {
+        return items -> items.forEach(customer -> log.info("item : {}" , customer));
     }
 }

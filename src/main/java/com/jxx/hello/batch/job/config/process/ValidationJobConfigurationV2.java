@@ -1,4 +1,4 @@
-package com.jxx.hello.batch.job.config;
+package com.jxx.hello.batch.job.config.process;
 
 import com.jxx.hello.domain.CustomerV5;
 import com.jxx.hello.batch.job.processor.application.UpperCaseNameService;
